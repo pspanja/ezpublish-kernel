@@ -1,47 +1,50 @@
+# Use trusty for better performance (and avoiding mysql/postgres/solr gone issues on precise and container infra)
+dist: trusty
+sudo: required
+
 language: php
 
-# execute unit tests, integration test stubs and integration tests using legacy storage engine
-env:
-  global:
-    - DB_NAME="testdb"
+services:
+  - mysql
+  - postgresql
+
+# Mysql isn't installed on trusty (only client is), so we need to specifically install it
+addons:
+  apt:
+    packages:
+    - mysql-server-5.6
+    - mysql-client-core-5.6
+    - mysql-client-5.6
 
 matrix:
   # mark as finished before allow_failures are run
   fast_finish: true
-  # misc nighlty tests we keep an eye on and aim to fix closer to stable versions
-#  allow_failures:
-#    - php: hhvm
-#      env: TEST_CONFIG="phpunit.xml"
   include:
-# 5.5
-    - php: 5.5
-      env: TEST_CONFIG="phpunit.xml"
-    - php: 5.5
-      env: TEST_CONFIG="phpunit-integration-legacy.xml" DB="mysql" DATABASE="mysql://root@localhost/$DB_NAME"
-    - php: 5.5
-      env: TEST_CONFIG="phpunit-integration-legacy.xml" DB="postgresql" DATABASE="pgsql://postgres@localhost/$DB_NAME"
-# 5.6
-    - php: 5.6
-      env: TEST_CONFIG="phpunit.xml" SYMFONY_VERSION="~2.7.0"
-    - php: 5.6
-      env: TEST_CONFIG="phpunit-integration-legacy.xml" SYMFONY_VERSION="~2.7.0"
-    - php: 5.6
-      env: BEHAT_OPTS="--profile=core --tags=~@broken"
-# 7.0
-    - php: 7.0
-      env: REST_TEST_CONFIG="phpunit-functional-rest.xml"
+# 7.0 (7 with unit & sqlite integration first to fail early with fast_finish)
     - php: 7.0
       env: TEST_CONFIG="phpunit.xml"
     - php: 7.0
-      env: BEHAT_OPTS="--profile=rest --suite=fullJson"
-    - php: 7.0
-      env: ELASTICSEARCH_VERSION="1.4.2" TEST_CONFIG="phpunit-integration-legacy-elasticsearch.xml"
+      env: TEST_CONFIG="phpunit-integration-legacy.xml"
 #    - php: 7.0
-#      env: SOLR_VERSION="4.10.4" TEST_CONFIG="phpunit-integration-legacy-solr.xml" CORES_SETUP="dedicated" SOLR_CORES="core0 core1 core2 core3" SOLR_CONFS="vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/schema.xml vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/custom-fields-types.xml vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/language-fieldtypes.xml"
+#      env: REST_TEST_CONFIG="phpunit-functional-rest.xml"
 #    - php: 7.0
-#      env: SOLR_VERSION="4.10.4" TEST_CONFIG="phpunit-integration-legacy-solr.xml" CORES_SETUP="shared" SOLR_CORES="core0 core1 core2 core3" SOLR_CONFS="vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/schema.xml vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/custom-fields-types.xml vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/language-fieldtypes.xml"
+#      env: BEHAT_OPTS="--profile=rest --suite=fullJson"
     - php: 7.0
       env: SOLR_VERSION="4.10.4" TEST_CONFIG="phpunit-integration-legacy-solr.xml" CORES_SETUP="single" SOLR_CONFS="vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/schema.xml vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/custom-fields-types.xml vendor/ezsystems/ezplatform-solr-search-engine/lib/Resources/config/solr/language-fieldtypes.xml"
+# 5.6
+    - php: 5.6
+      env: TEST_CONFIG="phpunit.xml"
+    - php: 5.6
+      env: TEST_CONFIG="phpunit-integration-legacy.xml" DB="postgresql" DATABASE="pgsql://postgres@localhost/testdb"
+    - php: 5.6
+      env: ELASTICSEARCH_VERSION="1.4.2" TEST_CONFIG="phpunit-integration-legacy-elasticsearch.xml"
+# 5.5
+    - php: 5.5
+      env: TEST_CONFIG="phpunit.xml" SYMFONY_VERSION="~2.8.0"
+    - php: 5.5
+      env: TEST_CONFIG="phpunit-integration-legacy.xml" DB="mysql" DATABASE="mysql://root@localhost/testdb" SYMFONY_VERSION="~2.8.0"
+#    - php: 5.6
+#      env: BEHAT_OPTS="--profile=core --tags=~@broken"
 # hhvm - disabled, no need to enable before travis has newer versions avaiable
 #    - php: hhvm
 #      env: TEST_CONFIG="phpunit.xml"
